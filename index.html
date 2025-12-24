@@ -21,9 +21,9 @@
         
         .dialog {
             width: 350px;
-            background-color: #f8f9ff;
-            border: 2px solid #7A8BFF;
-            box-shadow: 3px 3px 10px rgba(122, 139, 255, 0.15);
+            background-color: #f0f0f0;
+            border: 2px solid #003366; /* 墨蓝色边框 */
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
             position: absolute;
             z-index: 1;
             animation: fadeIn 0.3s ease;
@@ -35,7 +35,7 @@
         }
         
         .dialog-header {
-            background-color: #7A8BFF;
+            background-color: #003366; /* 墨蓝色标题栏 */
             color: white;
             padding: 8px 12px;
             font-weight: bold;
@@ -43,7 +43,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #7A8BFF;
+            border-bottom: 2px solid #003366;
             cursor: move;
             user-select: none;
         }
@@ -56,20 +56,20 @@
         .dialog-control {
             width: 18px;
             height: 18px;
-            background-color: #f8f9ff;
-            border: 1px solid #7A8BFF;
+            background-color: #f0f0f0;
+            border: 1px solid #808080;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 12px;
             font-weight: bold;
-            color: #7A8BFF;
+            color: #000;
             cursor: pointer;
             line-height: 1;
         }
         
         .dialog-control:hover {
-            background-color: #e8ebff;
+            background-color: #e0e0e0;
         }
         
         .dialog-content {
@@ -96,13 +96,13 @@
             font-size: 16px;
             margin-bottom: 12px;
             text-align: center;
-            color: #333;
+            color: #000;
             font-weight: bold;
         }
         
         .dialog-submessage {
             font-size: 13px;
-            color: #555;
+            color: #333;
             margin-bottom: 20px;
             text-align: center;
             display: flex;
@@ -122,24 +122,24 @@
             padding: 6px 20px;
             font-size: 14px;
             font-weight: bold;
-            border: 2px solid #7A8BFF;
-            background: linear-gradient(to bottom, #f8f9ff, #e8ebff);
-            color: #333;
+            border: 2px solid #808080;
+            background: linear-gradient(to bottom, #f0f0f0, #d0d0d0);
             cursor: pointer;
             min-width: 90px;
             text-align: center;
             transition: all 0.2s;
-            border-radius: 3px;
         }
         
         .dialog-button:hover {
-            background: linear-gradient(to bottom, #e8ebff, #d8dbff);
-            border-color: #6A7BEF;
-            box-shadow: 0 2px 5px rgba(122, 139, 255, 0.2);
+            background: linear-gradient(to bottom, #e8e8e8, #c8c8c8);
         }
         
         .dialog-button:active {
-            background: linear-gradient(to bottom, #d8dbff, #c8cbff);
+            background: linear-gradient(to bottom, #d0d0d0, #b0b0b0);
+        }
+        
+        .dialog-button.yes {
+            border-color: #003366; /* 墨蓝色边框 */
         }
         
         /* 响应式设计 */
@@ -184,12 +184,11 @@
             top: 10px;
             left: 10px;
             font-size: 12px;
-            color: #7A8BFF;
+            color: #666;
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.8);
             padding: 5px 10px;
             border-radius: 3px;
-            border: 1px solid #7A8BFF;
         }
     </style>
 </head>
@@ -323,7 +322,7 @@
                         <span>${randomSubMessage}</span>
                     </div>
                     <div class="dialog-buttons">
-                        <button class="dialog-button" onclick="createNextDialog(this)">Yes</button>
+                        <button class="dialog-button yes" onclick="createNextDialog(this)">Yes</button>
                         <button class="dialog-button" onclick="createNextDialog(this)">No</button>
                     </div>
                 </div>
@@ -538,7 +537,7 @@
                         });
                         
                         if (topDialog) {
-                            const yesBtn = topDialog.querySelector('.dialog-button:first-child');
+                            const yesBtn = topDialog.querySelector('.dialog-button.yes');
                             if (yesBtn) {
                                 createNextDialog(yesBtn);
                             }
@@ -562,7 +561,7 @@
                         });
                         
                         if (topDialog) {
-                            const noBtn = topDialog.querySelector('.dialog-button:last-child');
+                            const noBtn = topDialog.querySelector('.dialog-button:not(.yes)');
                             if (noBtn) {
                                 createNextDialog(noBtn);
                             }
