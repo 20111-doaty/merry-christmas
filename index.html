@@ -142,6 +142,7 @@
             background: linear-gradient(to bottom, #d8dbff, #c8cbff);
         }
         
+        /* 响应式设计 */
         @media (max-width: 500px) {
             .dialog {
                 width: 95%;
@@ -196,49 +197,73 @@
     <div class="instructions">点击Yes或No创建下一个弹窗 | ESC关闭最上层弹窗 | 可拖动弹窗</div>
 
     <script>
+        // 全局变量
         let dialogCounter = 0;
-        let maxDialogs = 50;
+        let maxDialogs = 50; // 最多显示的弹窗数量
         let zIndexCounter = 1;
-        let activeDialogs = [];
+        let activeDialogs = []; // 存储当前所有弹窗的ID
         
+        // 获取屏幕中央位置（用于第一个弹窗）
+        function getCenterPosition() {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const dialogWidth = 350;
+            const dialogHeight = 200;
+            
+            // 计算居中位置
+            const centerX = (windowWidth - dialogWidth) / 2;
+            const centerY = (windowHeight - dialogHeight) / 2;
+            
+            return { x: centerX, y: centerY };
+        }
+        
+        // 生成随机位置（用于后续弹窗）
         function getRandomPosition() {
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
             const dialogWidth = 350;
             const dialogHeight = 200;
             
+            // 确保弹窗不会超出屏幕边界
             const maxX = windowWidth - dialogWidth - 20;
             const maxY = windowHeight - dialogHeight - 20;
             
+            // 随机位置，但确保在可视区域内
             const randomX = Math.max(20, Math.min(maxX, Math.floor(Math.random() * maxX)));
             const randomY = Math.max(20, Math.min(maxY, Math.floor(Math.random() * maxY)));
             
             return { x: randomX, y: randomY };
         }
         
-        function createNewDialog() {
+        // 创建新弹窗
+        function createNewDialog(isFirstDialog = false) {
             dialogCounter++;
             zIndexCounter++;
             
+            // 如果弹窗太多，移除最旧的弹窗
             const allDialogs = document.querySelectorAll('.dialog');
             if (allDialogs.length >= maxDialogs) {
                 const oldestDialog = allDialogs[0];
                 const oldestDialogId = oldestDialog.id;
                 oldestDialog.remove();
                 
+                // 从活动弹窗列表中移除
                 const index = activeDialogs.indexOf(oldestDialogId);
                 if (index > -1) {
                     activeDialogs.splice(index, 1);
                 }
             }
             
+            // 创建新弹窗
             const newDialog = document.createElement('div');
             newDialog.className = 'dialog';
             const dialogId = 'dialog' + dialogCounter;
             newDialog.id = dialogId;
             
+            // 添加到活动弹窗列表
             activeDialogs.push(dialogId);
             
+            // 随机选择弹窗消息
             const messages = [
                 "CRAZY THURSDAY, GIVE 50 ￥",
                 "V我50，立刻！",
@@ -268,11 +293,18 @@
             const randomMessage = messages[Math.floor(Math.random() * messages.length)];
             const randomSubMessage = subMessages[Math.floor(Math.random() * subMessages.length)];
             
-            const randomPos = getRandomPosition();
+            // 获取位置：第一个弹窗居中，其他弹窗随机位置
+            let pos;
+            if (isFirstDialog) {
+                pos = getCenterPosition();
+            } else {
+                pos = getRandomPosition();
+            }
             
-            newDialog.style.left = `${randomPos.x}px`;
-            newDialog.style.top = `${randomPos.y}px`;
-            newDialog.style.zIndex = zIndexCounter;
+            // 设置弹窗位置和z-index
+            newDialog.style.left = `${pos.x}px`;
+            newDialog.style.top = `${pos.y}px`;
+            newDialog.style.zIndex = zIndexCounter; // 确保最新弹窗有最高的z-index
             
             newDialog.innerHTML = `
                 <div class="dialog-header">
@@ -298,14 +330,19 @@
             `;
             
             document.body.appendChild(newDialog);
+            
+            // 添加拖拽功能
             makeDraggable(newDialog);
             
+            // 添加点击弹窗内容区域时置顶
             newDialog.addEventListener('click', function(e) {
+                // 如果不是点击按钮，则置顶弹窗
                 if (!e.target.closest('.dialog-button')) {
                     bringToFront(this);
                 }
             });
             
+            // 添加轻微震动效果
             if (dialogCounter % 7 === 0) {
                 triggerShake(newDialog);
             }
@@ -313,13 +350,18 @@
             return newDialog;
         }
         
+        // 创建下一个弹窗
         function createNextDialog(button) {
+            // 先置顶当前弹窗
             bringToFront(button);
+            
+            // 然后创建新弹窗（非第一个，所以随机位置）
             setTimeout(() => {
-                createNewDialog();
+                createNewDialog(false);
             }, 100);
         }
         
+        // 使弹窗可拖动
         function makeDraggable(dialog) {
             const header = dialog.querySelector('.dialog-header');
             let isDragging = false;
@@ -330,9 +372,12 @@
             
             function startDrag(e) {
                 isDragging = true;
+                // 将弹窗置于最前面
                 bringToFront(dialog);
+                
                 offsetX = e.clientX - dialog.offsetLeft;
                 offsetY = e.clientY - dialog.offsetTop;
+                
                 document.addEventListener('mousemove', drag);
                 document.addEventListener('mouseup', stopDrag);
                 e.preventDefault();
@@ -340,10 +385,13 @@
             
             function startDragTouch(e) {
                 isDragging = true;
+                // 将弹窗置于最前面
                 bringToFront(dialog);
+                
                 const touch = e.touches[0];
                 offsetX = touch.clientX - dialog.offsetLeft;
                 offsetY = touch.clientY - dialog.offsetTop;
+                
                 document.addEventListener('touchmove', dragTouch);
                 document.addEventListener('touchend', stopDrag);
                 e.preventDefault();
@@ -351,29 +399,41 @@
             
             function drag(e) {
                 if (!isDragging) return;
+                
                 const windowWidth = window.innerWidth;
                 const windowHeight = window.innerHeight;
                 const dialogWidth = dialog.offsetWidth;
                 const dialogHeight = dialog.offsetHeight;
+                
+                // 计算新位置，确保弹窗不会超出屏幕边界
                 let newX = e.clientX - offsetX;
                 let newY = e.clientY - offsetY;
+                
+                // 限制边界
                 newX = Math.max(0, Math.min(windowWidth - dialogWidth, newX));
                 newY = Math.max(0, Math.min(windowHeight - dialogHeight, newY));
+                
                 dialog.style.left = `${newX}px`;
                 dialog.style.top = `${newY}px`;
             }
             
             function dragTouch(e) {
                 if (!isDragging) return;
+                
                 const touch = e.touches[0];
                 const windowWidth = window.innerWidth;
                 const windowHeight = window.innerHeight;
                 const dialogWidth = dialog.offsetWidth;
                 const dialogHeight = dialog.offsetHeight;
+                
+                // 计算新位置，确保弹窗不会超出屏幕边界
                 let newX = touch.clientX - offsetX;
                 let newY = touch.clientY - offsetY;
+                
+                // 限制边界
                 newX = Math.max(0, Math.min(windowWidth - dialogWidth, newX));
                 newY = Math.max(0, Math.min(windowHeight - dialogHeight, newY));
+                
                 dialog.style.left = `${newX}px`;
                 dialog.style.top = `${newY}px`;
             }
@@ -387,13 +447,16 @@
             }
         }
         
+        // 将弹窗置于最前面
         function bringToFront(element) {
             const dialog = element.closest ? element.closest('.dialog') : element;
             if (!dialog) return;
+            
             zIndexCounter++;
             dialog.style.zIndex = zIndexCounter;
         }
         
+        // 最小化弹窗
         function minimizeDialog(element) {
             const dialog = element.closest('.dialog');
             const content = dialog.querySelector('.dialog-content');
@@ -404,6 +467,7 @@
             }
         }
         
+        // 最大化弹窗
         function maximizeDialog(element) {
             const dialog = element.closest('.dialog');
             if (dialog.style.width === '95%') {
@@ -415,23 +479,30 @@
             }
         }
         
+        // 关闭弹窗
         function closeDialog(element) {
             const dialog = element.closest('.dialog');
             const dialogId = dialog.id;
+            
+            // 从活动弹窗列表中移除
             const index = activeDialogs.indexOf(dialogId);
             if (index > -1) {
                 activeDialogs.splice(index, 1);
             }
+            
             dialog.remove();
             dialogCounter--;
+            
+            // 如果所有弹窗都关闭了，创建一个新的初始弹窗（居中）
             if (document.querySelectorAll('.dialog').length === 0) {
                 setTimeout(() => {
                     dialogCounter = 0;
-                    createNewDialog();
+                    createNewDialog(true);
                 }, 500);
             }
         }
         
+        // 触发震动效果
         function triggerShake(dialog) {
             const originalTransform = dialog.style.transform || '';
             dialog.style.transform = originalTransform + ' translateX(5px)';
@@ -443,15 +514,21 @@
             }, 200);
         }
         
+        // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            createNewDialog();
+            // 创建初始弹窗（只有一个，居中显示）
+            createNewDialog(true);
             
+            // 添加键盘事件支持
             document.addEventListener('keydown', function(e) {
+                // 按Y或回车键创建新弹窗
                 if (e.key === 'y' || e.key === 'Y' || e.key === 'Enter') {
                     const dialogs = document.querySelectorAll('.dialog');
                     if (dialogs.length > 0) {
+                        // 找到最顶层的弹窗，点击它的Yes按钮
                         let highestZIndex = 0;
                         let topDialog = null;
+                        
                         dialogs.forEach(dialog => {
                             const zIndex = parseInt(dialog.style.zIndex) || 0;
                             if (zIndex > highestZIndex) {
@@ -459,6 +536,7 @@
                                 topDialog = dialog;
                             }
                         });
+                        
                         if (topDialog) {
                             const yesBtn = topDialog.querySelector('.dialog-button:first-child');
                             if (yesBtn) {
@@ -466,11 +544,15 @@
                             }
                         }
                     }
-                } else if (e.key === 'n' || e.key === 'N') {
+                }
+                // 按N键创建新弹窗
+                else if (e.key === 'n' || e.key === 'N') {
                     const dialogs = document.querySelectorAll('.dialog');
                     if (dialogs.length > 0) {
+                        // 找到最顶层的弹窗，点击它的No按钮
                         let highestZIndex = 0;
                         let topDialog = null;
+                        
                         dialogs.forEach(dialog => {
                             const zIndex = parseInt(dialog.style.zIndex) || 0;
                             if (zIndex > highestZIndex) {
@@ -478,6 +560,7 @@
                                 topDialog = dialog;
                             }
                         });
+                        
                         if (topDialog) {
                             const noBtn = topDialog.querySelector('.dialog-button:last-child');
                             if (noBtn) {
@@ -485,11 +568,15 @@
                             }
                         }
                     }
-                } else if (e.key === 'Escape') {
+                }
+                // 按ESC键关闭最顶层的弹窗
+                else if (e.key === 'Escape') {
                     const dialogs = document.querySelectorAll('.dialog');
                     if (dialogs.length > 0) {
+                        // 找到z-index最高的弹窗
                         let highestZIndex = 0;
                         let topDialog = null;
+                        
                         dialogs.forEach(dialog => {
                             const zIndex = parseInt(dialog.style.zIndex) || 0;
                             if (zIndex > highestZIndex) {
@@ -497,16 +584,21 @@
                                 topDialog = dialog;
                             }
                         });
+                        
                         if (topDialog) {
                             const closeBtn = topDialog.querySelector('.dialog-controls .dialog-control:last-child');
                             closeDialog(closeBtn);
                         }
                     }
-                } else if (e.key === ' ') {
+                }
+                // 按空格键创建新弹窗
+                else if (e.key === ' ') {
                     const dialogs = document.querySelectorAll('.dialog');
                     if (dialogs.length > 0) {
+                        // 找到最顶层的弹窗，随机点击一个按钮
                         let highestZIndex = 0;
                         let topDialog = null;
+                        
                         dialogs.forEach(dialog => {
                             const zIndex = parseInt(dialog.style.zIndex) || 0;
                             if (zIndex > highestZIndex) {
@@ -514,6 +606,7 @@
                                 topDialog = dialog;
                             }
                         });
+                        
                         if (topDialog) {
                             const buttons = topDialog.querySelectorAll('.dialog-button');
                             const randomBtn = buttons[Math.floor(Math.random() * buttons.length)];
@@ -524,6 +617,7 @@
             });
         });
         
+        // 窗口大小变化时调整弹窗位置
         window.addEventListener('resize', function() {
             const dialogs = document.querySelectorAll('.dialog');
             dialogs.forEach(dialog => {
@@ -533,14 +627,19 @@
                 const dialogHeight = dialog.offsetHeight;
                 const windowWidth = window.innerWidth;
                 const windowHeight = window.innerHeight;
+                
+                // 确保弹窗不会超出新窗口边界
                 let newX = currentLeft;
                 let newY = currentTop;
+                
                 if (currentLeft + dialogWidth > windowWidth) {
                     newX = windowWidth - dialogWidth - 20;
                 }
+                
                 if (currentTop + dialogHeight > windowHeight) {
                     newY = windowHeight - dialogHeight - 20;
                 }
+                
                 dialog.style.left = `${Math.max(20, newX)}px`;
                 dialog.style.top = `${Math.max(20, newY)}px`;
             });
